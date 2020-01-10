@@ -6,6 +6,7 @@ import Data.Array.Accelerate (toList, fromList, (:.)(..), Z(..))
 import Data.List (sortOn)
 import Control.Monad
 
+--Hey Jochie
 main :: IO ()
 main = do
   args <- getArgs

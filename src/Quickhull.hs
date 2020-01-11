@@ -22,6 +22,7 @@ type Line = (Point, Point)
 
 type SegmentedPoints = (Vector Bool, Vector Point)
 
+--Left == Upper?
 pointIsLeftOfLine :: Exp Line -> Exp Point -> Exp Bool
 pointIsLeftOfLine (T2 (T2 x1 y1) (T2 x2 y2)) (T2 x y) = nx * x + ny * y > c
   where
@@ -37,11 +38,13 @@ nonNormalizedDistance (T2 (T2 x1 y1) (T2 x2 y2)) (T2 x y) = nx * x + ny * y - c
     c = nx * x1 + ny * y1
 
 -- * Exercise 1
+--Leftmost: Laagste x
 leftMostPoint :: Acc (Vector Point) -> Acc (Scalar Point)
 leftMostPoint points = fold1
   (\p1 p2 -> ifThenElse ((fst p1) < (fst p2)) p1 p2)
   points
 
+  --Rightmost: Hoogste x
 rightMostPoint :: Acc (Vector Point) -> Acc (Scalar Point)
 rightMostPoint points = fold1
   (\p1 p2 -> ifThenElse ((fst p1) > (fst p2)) p1 p2)
@@ -56,19 +59,37 @@ initialPartition points =
 
     -- * Exercise 2
     isUpper :: Acc (Vector Bool)
-    isUpper = undefined
+    isUpper = generate 
+      (shape points) 
+      (\sh -> pointIsLeftOfLine line (points ! sh))
 
     isLower :: Acc (Vector Bool)
-    isLower = undefined
+    isLower = 
+      let notUpper sh = not (isUpper ! sh)
+          notExtreme sh = not (isExtreme $ points ! sh)
+          isExtreme point = (equal point p1) || (equal point p2)
+          equal (T2 x1 y1) (T2 x2 y2) = (x1 == x2) && (y1 == y2)
+      in 
+        generate 
+          (shape points) 
+          (\sh -> notUpper sh && notExtreme sh)
 
     -- * Exercise 3
     lowerIndices :: Acc (Vector Int)
-    lowerIndices = undefined
+    lowerIndices = 
+      let isLowerInt = map toInt isLower
+          toInt bool = ifThenElse bool 1 0
+      in prescanl (+) 0 isLowerInt
 
     -- * Exercise 4
     upperIndices :: Acc (Vector Int)
     countUpper :: Acc (Scalar Int)
-    T2 upperIndices countUpper = undefined
+    T2 upperIndices countUpper = 
+      let
+        isUpperInt = map toInt isUpper
+        toInt bool = ifThenElse bool 1 0       
+      in scanl' (+) 0 isUpperInt              --MOET SCAN NIET EXCLUSIEF??
+
 
     -- * Exercise 5
     permutation :: Acc (Vector (Z :. Int))

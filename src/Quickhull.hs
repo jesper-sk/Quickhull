@@ -12,7 +12,7 @@ import qualified Data.Array.Accelerate.Unsafe as Unsafe
 import qualified Prelude as P
 
 -- Accelerate backend
-import Data.Array.Accelerate.Interpreter
+import Data.Array.Accelerate.Interpreter 
 -- import Data.Array.Accelerate.LLVM.Native
 -- import Data.Array.Accelerate.LLVM.PTX
 
@@ -38,10 +38,14 @@ nonNormalizedDistance (T2 (T2 x1 y1) (T2 x2 y2)) (T2 x y) = nx * x + ny * y - c
 
 -- * Exercise 1
 leftMostPoint :: Acc (Vector Point) -> Acc (Scalar Point)
-leftMostPoint = undefined
+leftMostPoint points = fold1
+  (\p1 p2 -> ifThenElse ((fst p1) < (fst p2)) p1 p2)
+  points
 
 rightMostPoint :: Acc (Vector Point) -> Acc (Scalar Point)
-rightMostPoint = undefined
+rightMostPoint points = fold1
+  (\p1 p2 -> ifThenElse ((fst p1) > (fst p2)) p1 p2)
+  points
 
 initialPartition :: Acc (Vector Point) -> Acc SegmentedPoints
 initialPartition points =

@@ -103,7 +103,11 @@ initialPartition points =
 
     -- * Exercise 6
     empty :: Acc (Vector Point)
-    empty = undefined
+    empty = 
+      let oldsh = shape points
+          sh = ilift1 (\x -> (x + 1)) oldsh
+      in
+        fill sh p1
 
     newPoints :: Acc (Vector Point)
     newPoints = permute const empty (permutation !) points

@@ -57,6 +57,9 @@ initialPartition points =
     p2 = the $ rightMostPoint points
     line = T2 p1 p2
 
+    isExtreme point = (equal point p1) || (equal point p2)
+    equal (T2 x1 y1) (T2 x2 y2) = (x1 == x2) && (y1 == y2)
+
     -- * Exercise 2
     isUpper :: Acc (Vector Bool)
     isUpper = generate 
@@ -67,8 +70,6 @@ initialPartition points =
     isLower = 
       let notUpper sh = not (isUpper ! sh)
           notExtreme sh = not (isExtreme $ points ! sh)
-          isExtreme point = (equal point p1) || (equal point p2)
-          equal (T2 x1 y1) (T2 x2 y2) = (x1 == x2) && (y1 == y2)
       in 
         generate 
           (shape points) 
@@ -94,17 +95,16 @@ initialPartition points =
     permutation :: Acc (Vector (Z :. Int))
     permutation =
       let
-        equal (T2 x1 y1) (T2 x2 y2) = (x1 == x2) && (y1 == y2)
+        countUpperExp = the countUpper
 
         f :: Exp Point -> Exp Bool -> Exp Int -> Exp Int -> Exp (Z :. Int)
         f p upper idxLower idxUpper = 
           ifThenElse upper
             (index1 idxUpper)
-            (ifThenElse (equal p p1)
-              (index1 0)
-              (ifThenElse (equal p p2)
-                (index1 1)   --countUpper
-                (index1 1))) --countUpper + idxLower + 1
+            (caseof p
+              [ ((\p -> equal p p1), index1 0),
+                ((\p -> equal p p2), index1 countUpperExp)
+              ] (index1 $ countUpperExp + idxLower + 1))
       in
         zipWith4 f points isUpper lowerIndices upperIndices
 
@@ -113,15 +113,17 @@ initialPartition points =
     empty = 
       let oldsh = shape points
           sh = ilift1 (\x -> (x + 1)) oldsh
-      in
-        fill sh p1
+      in fill sh p1
 
     newPoints :: Acc (Vector Point)
     newPoints = permute const empty (permutation !) points
 
     -- * Exercise 7
     headFlags :: Acc (Vector Bool)
-    headFlags = undefined
+    headFlags =
+      let oldsh = shape points
+          sh = ilift1 (\x -> (x + 1)) oldsh
+      in generate sh (\ind -> isExtreme $ newPoints ! ind)
   in
     T2 headFlags newPoints
 
@@ -220,10 +222,10 @@ condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
 condition = undefined
 
 -- * Exercise 21
-quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
-quickhull' = undefined
+quickhull' :: Acc (Vector Point) -> Acc SegmentedPoints
+quickhull' = initialPartition
 
-quickhull :: Vector Point -> Vector Point
+quickhull :: Vector Point -> SegmentedPoints
 quickhull = run1 quickhull'
 
 -- * Bonus

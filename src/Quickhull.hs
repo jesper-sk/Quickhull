@@ -90,14 +90,21 @@ initialPartition points =
         toInt bool = ifThenElse bool 1 0       
       in scanl' (+) 0 isUpperInt              --MOET SCAN NIET EXCLUSIEF??
 
-
     -- * Exercise 5
     permutation :: Acc (Vector (Z :. Int))
     permutation =
       let
+        equal (T2 x1 y1) (T2 x2 y2) = (x1 == x2) && (y1 == y2)
+
         f :: Exp Point -> Exp Bool -> Exp Int -> Exp Int -> Exp (Z :. Int)
-        f p upper idxLower idxUpper
-          = undefined
+        f p upper idxLower idxUpper = 
+          ifThenElse upper
+            (index1 idxUpper)
+            (ifThenElse (equal p p1)
+              (index1 0)
+              (ifThenElse (equal p p2)
+                (index1 1)   --countUpper
+                (index1 1))) --countUpper + idxLower + 1
       in
         zipWith4 f points isUpper lowerIndices upperIndices
 

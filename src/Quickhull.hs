@@ -158,10 +158,20 @@ propagateLine (T2 headFlags points) = zip vecP1 vecP2
 
 -- * Exercise 11
 shiftHeadFlagsL :: Acc (Vector Bool) -> Acc (Vector Bool)
-shiftHeadFlagsL flags = undefined
+shiftHeadFlagsL flags = 
+  let f i = 
+        (i == (size flags) - 1) ? 
+        ((constant False), 
+        (flags !! (i + 1)))
+  in generate (shape flags) (\ind -> f (unindex1 ind))
 
 shiftHeadFlagsR :: Acc (Vector Bool) -> Acc (Vector Bool)
-shiftHeadFlagsR flags = undefined
+shiftHeadFlagsR flags = 
+  let f i = 
+        (i == (0)) ?
+        ((constant False),
+        (flags !! (i - 1)))
+  in generate (shape flags) (\ind -> f (unindex1 ind))
 
 partition :: Acc SegmentedPoints -> Acc SegmentedPoints
 partition (T2 headFlags points) =
@@ -230,10 +240,10 @@ condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
 condition = undefined
 
 -- * Exercise 21
-quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
-quickhull' = undefined
+quickhull' :: Acc (Vector Point) -> Acc (Vector Line)
+quickhull' = propagateLine . initialPartition
 
-quickhull :: Vector Point -> Vector Point
+quickhull :: Vector Point -> Vector Line
 quickhull = run1 quickhull'
 
 -- * Bonus

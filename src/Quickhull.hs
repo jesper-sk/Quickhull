@@ -234,3 +234,17 @@ quickhullSort' = undefined
 
 quickhullSort :: Vector Int -> Vector Int
 quickhullSort = run1 quickhullSort'
+
+-- -- * Exercise 21
+-- quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
+-- quickhull' = undefined
+
+-- quickhull :: Vector Point -> Vector Point
+-- quickhull = run1 quickhull'
+
+-- -- * Bonus
+-- quickhullSort' :: Acc (Vector Int) -> Acc (Vector Int)
+-- quickhullSort' = undefined
+
+-- quickhullSort :: Vector Int -> Vector Int
+-- quickhullSort = run1 quickhullSort'

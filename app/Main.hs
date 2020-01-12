@@ -31,16 +31,12 @@ run path = do
   else
     printPoints input
 
-  -- let output = toList $ quickhull $ fromList (Z :. length input) input
-  -- putStrLn "Output:"
-  -- if veryLarge then
-  --   putStrLn $ "Set of " ++ show (length output) ++ " points"
-  -- else
-  --   printPoints output
-  let (points, bools) = quickhull $ fromList (Z :. length input) input
-  print $ toList points
-  putStrLn ""
-  print $ toList bools
+  let output = toList $ quickhull $ fromList (Z :. length input) input
+  putStrLn "Output:"
+  if veryLarge then
+    putStrLn $ "Set of " ++ show (length output) ++ " points"
+  else
+    printPoints output
 
 readInput :: FilePath -> IO [Point]
 readInput path = do

@@ -37,10 +37,8 @@ run path = do
   --   putStrLn $ "Set of " ++ show (length output) ++ " points"
   -- else
   --   printPoints output
-  let (points, bools) = quickhull $ fromList (Z :. length input) input
-  print $ toList points
-  putStrLn ""
-  print $ toList bools
+  let lines = quickhull $ fromList (Z :. length input) input
+  print $ toList lines
 
 readInput :: FilePath -> IO [Point]
 readInput path = do

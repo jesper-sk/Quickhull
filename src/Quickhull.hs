@@ -89,7 +89,7 @@ initialPartition points =
       let
         isUpperInt = map toInt isUpper
         toInt bool = ifThenElse bool 1 0       
-      in scanl' (+) 0 isUpperInt              --MOET SCAN NIET EXCLUSIEF??
+      in scanl' (+) 1 isUpperInt              --MOET SCAN NIET EXCLUSIEF??
 
     -- * Exercise 5
     permutation :: Acc (Vector (Z :. Int))
@@ -100,11 +100,11 @@ initialPartition points =
         f :: Exp Point -> Exp Bool -> Exp Int -> Exp Int -> Exp (Z :. Int)
         f p upper idxLower idxUpper = 
           ifThenElse upper
-            (index1 (idxUpper + 1))
+            (index1 idxUpper)
             (caseof p
               [ ((\p -> equal p p1), index1 0),
-                ((\p -> equal p p2), index1 (countUpperExp + 1))
-              ] (index1 $ countUpperExp + idxLower + 2))
+                ((\p -> equal p p2), index1 countUpperExp)
+              ] (index1 $ countUpperExp + idxLower + 1))
       in
         zipWith4 f points isUpper lowerIndices upperIndices
 
@@ -113,7 +113,7 @@ initialPartition points =
     empty = 
       let oldsh = shape points
           sh = ilift1 (\x -> (x + 1)) oldsh
-      in fill sh $ constant (6,6)
+      in fill sh p1
 
     newPoints :: Acc (Vector Point)
     newPoints = permute const empty (permutation !) points
@@ -129,10 +129,18 @@ initialPartition points =
 
 -- * Exercise 8
 segmentedPostscanl :: Elt a => (Exp a -> Exp a -> Exp a) -> Acc (Vector Bool) -> Acc (Vector a) -> Acc (Vector a)
-segmentedPostscanl = undefined
+segmentedPostscanl f bools units = 
+  let fs (fx, x) (fy, y) = (fx || fy, fy ? (y, (f x y)))
+      tupled = zip bools units
+      scan = postscanl (lift2 fs) (T2 (constant False) Unsafe.undef) tupled
+  in P.snd $ unzip scan
 
 segmentedPostscanr :: Elt a => (Exp a -> Exp a -> Exp a) -> Acc (Vector Bool) -> Acc (Vector a) -> Acc (Vector a)
-segmentedPostscanr = undefined
+segmentedPostscanr f bools units =
+  let fs (fx, x) (fy, y) = (fx || fy, fx ? (x, (f x y)))
+      tupled = zip bools units
+      scan = postscanr (lift2 fs) (T2 (constant False) Unsafe.undef) tupled
+  in P.snd $ unzip scan
 
 -- * Exercise 9
 propagateL :: Elt a => Acc (Vector Bool) -> Acc (Vector a) -> Acc (Vector a)
@@ -150,10 +158,20 @@ propagateLine (T2 headFlags points) = zip vecP1 vecP2
 
 -- * Exercise 11
 shiftHeadFlagsL :: Acc (Vector Bool) -> Acc (Vector Bool)
-shiftHeadFlagsL flags = undefined
+shiftHeadFlagsL flags = 
+  let f i = 
+        (i == (size flags) - 1) ? 
+        ((constant False), 
+        (flags !! (i + 1)))
+  in generate (shape flags) (\ind -> f (unindex1 ind))
 
 shiftHeadFlagsR :: Acc (Vector Bool) -> Acc (Vector Bool)
-shiftHeadFlagsR flags = undefined
+shiftHeadFlagsR flags = 
+  let f i = 
+        (i == (0)) ?
+        ((constant False),
+        (flags !! (i - 1)))
+  in generate (shape flags) (\ind -> f (unindex1 ind))
 
 partition :: Acc SegmentedPoints -> Acc SegmentedPoints
 partition (T2 headFlags points) =
@@ -222,10 +240,10 @@ condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
 condition = undefined
 
 -- * Exercise 21
-quickhull' :: Acc (Vector Point) -> Acc SegmentedPoints
-quickhull' = initialPartition
+quickhull' :: Acc (Vector Point) -> Acc (Vector Line)
+quickhull' = propagateLine . initialPartition
 
-quickhull :: Vector Point -> SegmentedPoints
+quickhull :: Vector Point -> Vector Line
 quickhull = run1 quickhull'
 
 -- * Bonus

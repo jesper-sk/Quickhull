@@ -100,11 +100,11 @@ initialPartition points =
         f :: Exp Point -> Exp Bool -> Exp Int -> Exp Int -> Exp (Z :. Int)
         f p upper idxLower idxUpper = 
           ifThenElse upper
-            (index1 idxUpper)
+            (index1 (idxUpper + 1))
             (caseof p
               [ ((\p -> equal p p1), index1 0),
-                ((\p -> equal p p2), index1 countUpperExp)
-              ] (index1 $ countUpperExp + idxLower + 1))
+                ((\p -> equal p p2), index1 (countUpperExp + 1))
+              ] (index1 $ countUpperExp + idxLower + 2))
       in
         zipWith4 f points isUpper lowerIndices upperIndices
 
@@ -113,7 +113,7 @@ initialPartition points =
     empty = 
       let oldsh = shape points
           sh = ilift1 (\x -> (x + 1)) oldsh
-      in fill sh p1
+      in fill sh $ constant (6,6)
 
     newPoints :: Acc (Vector Point)
     newPoints = permute const empty (permutation !) points

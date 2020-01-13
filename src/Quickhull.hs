@@ -186,8 +186,8 @@ partition (T2 headFlags points) =
     furthest :: Acc (Vector Point)
     furthest = 
       let d t = nonNormalizedDistance (fst t) (snd t)
-          maxD t1 t2 = (d t1) > (d t2) ? (t1, t2) 
-          maxEnd = P.snd $ unzip $ segmentedPostscanl (lift2 maxD) headFlagsR (zip vecLine points)
+          maxD t1 t2 = (d t1) > (d t2) ? (t1, t2)
+          maxEnd = P.snd $ unzip $ segmentedPostscanl maxD headFlagsR (zip vecLine points)
       in propagateR headFlagsL maxEnd
 
     -- * Exercise 13

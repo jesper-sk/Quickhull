@@ -185,34 +185,47 @@ partition (T2 headFlags points) =
     -- * Exercise 12
     furthest :: Acc (Vector Point)
     furthest = 
-      let 
-        maxD :: (Exp Line, Exp Point) -> (Exp Line, Exp Point) -> (Exp Line, Exp Point)
-        maxD (l1, p1) (l2, p2) = 
-          ((nonNormalizedDistance l1 p1) > (nonNormalizedDistance l2 p2)) ? ((p1,p1), (l2,p2))
-        maxEnd = segmentedPostcanl (lift2 maxD) headFlagsR (zip vecLine points )
-      in undefined
+      let d t = nonNormalizedDistance (fst t) (snd t)
+          maxD t1 t2 = (d t1) > (d t2) ? (t1, t2) 
+          maxEnd = P.snd $ unzip $ segmentedPostscanl (lift2 maxD) headFlagsR (zip vecLine points)
+      in propagateR headFlagsL maxEnd
 
     -- * Exercise 13
     isLeft :: Acc (Vector Bool)
-    isLeft = undefined
+    isLeft = zipWith3 (\(T2 p1 p2) pf p -> pointIsLeftOfLine (T2 p1 pf) p) vecLine furthest points
 
     isRight :: Acc (Vector Bool)
-    isRight = undefined
+    isRight = zipWith3 (\(T2 p1 p2) pf p -> not $ pointIsLeftOfLine (T2 p1 pf) p) vecLine furthest points
 
     -- * Exercise 14
+    -- FF KIJKEN OF IK DIT GOED GEDAAN HEB
     segmentIdxLeft :: Acc (Vector Int)
-    segmentIdxLeft = undefined
+    segmentIdxLeft = 
+      let isLeftInt = map toInt isLeft      -- Zet de booleans over naar Ints
+          toInt bool = ifThenElse bool 1 0  -- helperfunctie voor de map
+      in segmentedPostscanl (+) headFlags isLeftInt  -- Voer een segmentedpostscan uit, 
+                                                      -- vgm kan je of headFlags of headFlagsR gebruiken, NIET headFlagsL! Want p1, p2 en pf zijn én niet isLeft én niet isRight
+                                                      -- Niet headFlagsL want dan wordt de counter een point te vroeg gereset.
 
+    -- Works the same as segmentIdxLeft, however here we look if the point isRight:
     segmentIdxRight :: Acc (Vector Int)
-    segmentIdxRight = undefined
+    segmentIdxRight = 
+      let isRightInt = map toInt isRight
+          toInt bool = ifThenElse bool 1 0
+      in segmentedPostscanl (+) headFlags isRightInt
 
     -- * Exercise 15
+    -- OOK HIER FF KIJKEN OF DIT GOED IS QUA HEADFLAGS
     countLeft :: Acc (Vector Int)
-    countLeft = undefined
+    countLeft = propagateR headFlags segmentIdxLeft
 
     -- * Exercise 16
     segmentSize :: Acc (Vector Int)
-    segmentSize = undefined
+    segmentSize =
+      let 
+        f :: Exp (Int, Int) -> Exp (Int, Int) -> Exp (Int, Int)
+        f t1 t2 = lift (((fst t1) + (fst t2) + (snd t2) + 1), constant (1 :: Int))
+      in P.fst $ unzip $ segmentedPostscanl f headFlags (zip segmentIdxRight segmentIdxLeft)
 
     segmentOffset :: Acc (Vector Int)
     size :: Acc (Scalar Int)

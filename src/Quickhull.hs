@@ -112,7 +112,7 @@ initialPartition points =
     empty :: Acc (Vector Point)
     empty = 
       let oldsh = shape points
-          sh = ilift1 (\x -> (x + 1)) oldsh
+          sh = ilift1 (1 +) oldsh
       in fill sh p1
 
     newPoints :: Acc (Vector Point)
@@ -122,7 +122,7 @@ initialPartition points =
     headFlags :: Acc (Vector Bool)
     headFlags =
       let oldsh = shape points
-          sh = ilift1 (\x -> (x + 1)) oldsh
+          sh = ilift1 (1 +) oldsh
       in generate sh (\ind -> isExtreme $ newPoints ! ind)
   in
     T2 headFlags newPoints

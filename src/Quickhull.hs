@@ -41,13 +41,13 @@ nonNormalizedDistance (T2 (T2 x1 y1) (T2 x2 y2)) (T2 x y) = nx * x + ny * y - c
 --Leftmost: Laagste x
 leftMostPoint :: Acc (Vector Point) -> Acc (Scalar Point)
 leftMostPoint points = fold1
-  (\p1 p2 -> ifThenElse ((fst p1) < (fst p2)) p1 p2)
+  (\p1 p2 -> ifThenElse ((fst p1) <= (fst p2)) p1 p2)
   points
 
   --Rightmost: Hoogste x
 rightMostPoint :: Acc (Vector Point) -> Acc (Scalar Point)
 rightMostPoint points = fold1
-  (\p1 p2 -> ifThenElse ((fst p1) > (fst p2)) p1 p2)
+  (\p1 p2 -> ifThenElse ((fst p1) >= (fst p2)) p1 p2)
   points
 
 initialPartition :: Acc (Vector Point) -> Acc SegmentedPoints
@@ -163,7 +163,7 @@ shiftHeadFlagsL flags =
         (i == (size flags) - 1) ? 
         ((constant False), 
         (flags !! (i + 1)))
-  in generate (shape flags) (\ind -> f (unindex1 ind))
+  in generate (shape flags) (f . unindex1)
 
 shiftHeadFlagsR :: Acc (Vector Bool) -> Acc (Vector Bool)
 shiftHeadFlagsR flags = 
@@ -171,7 +171,7 @@ shiftHeadFlagsR flags =
         (i == (0)) ?
         ((constant False),
         (flags !! (i - 1)))
-  in generate (shape flags) (\ind -> f (unindex1 ind))
+  in generate (shape flags) (f . unindex1)
 
 partition :: Acc SegmentedPoints -> Acc SegmentedPoints
 partition (T2 headFlags points) =
@@ -184,7 +184,13 @@ partition (T2 headFlags points) =
 
     -- * Exercise 12
     furthest :: Acc (Vector Point)
-    furthest = undefined
+    furthest = 
+      let 
+        maxD :: (Exp Line, Exp Point) -> (Exp Line, Exp Point) -> (Exp Line, Exp Point)
+        maxD (l1, p1) (l2, p2) = 
+          ((nonNormalizedDistance l1 p1) > (nonNormalizedDistance l2 p2)) ? ((p1,p1), (l2,p2))
+        maxEnd = segmentedPostcanl (lift2 maxD) headFlagsR (zip vecLine points )
+      in undefined
 
     -- * Exercise 13
     isLeft :: Acc (Vector Bool)

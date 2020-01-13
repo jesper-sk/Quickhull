@@ -41,13 +41,13 @@ nonNormalizedDistance (T2 (T2 x1 y1) (T2 x2 y2)) (T2 x y) = nx * x + ny * y - c
 --Leftmost: Laagste x
 leftMostPoint :: Acc (Vector Point) -> Acc (Scalar Point)
 leftMostPoint points = fold1
-  (\p1 p2 -> ifThenElse ((fst p1) < (fst p2)) p1 p2)
+  (\p1 p2 -> ifThenElse ((fst p1) <= (fst p2)) p1 p2) -- '<' instead of '<=' to take first extreme point
   points
 
   --Rightmost: Hoogste x
 rightMostPoint :: Acc (Vector Point) -> Acc (Scalar Point)
 rightMostPoint points = fold1
-  (\p1 p2 -> ifThenElse ((fst p1) > (fst p2)) p1 p2)
+  (\p1 p2 -> ifThenElse ((fst p1) >= (fst p2)) p1 p2) -- '>' instead of '>' to take first extreme point
   points
 
 initialPartition :: Acc (Vector Point) -> Acc SegmentedPoints
@@ -240,10 +240,11 @@ condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
 condition = undefined
 
 -- * Exercise 21
-quickhull' :: Acc (Vector Point) -> Acc (Vector Line)
-quickhull' = propagateLine . initialPartition
+quickhull' :: Acc (Vector Point) -> Acc (Vector Bool, Vector Point)
+quickhull' = initialPartition
+--quickhull' = propagateLine . initialPartition
 
-quickhull :: Vector Point -> Vector Line
+quickhull :: Vector Point -> (Vector Bool, Vector Point)
 quickhull = run1 quickhull'
 
 -- * Bonus
@@ -252,3 +253,21 @@ quickhullSort' = undefined
 
 quickhullSort :: Vector Int -> Vector Int
 quickhullSort = run1 quickhullSort'
+
+-- -- * Exercise 20
+-- condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
+-- condition = undefined
+
+-- -- * Exercise 21
+-- quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
+-- quickhull' = undefined
+
+-- quickhull :: Vector Point -> Vector Point
+-- quickhull = run1 quickhull'
+
+-- -- * Bonus
+-- quickhullSort' :: Acc (Vector Int) -> Acc (Vector Int)
+-- quickhullSort' = undefined
+
+-- quickhullSort :: Vector Int -> Vector Int
+-- quickhullSort = run1 quickhullSort'

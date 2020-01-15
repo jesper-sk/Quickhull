@@ -31,13 +31,13 @@ run path = do
   else
     printPoints input
 
-  let (b,p) = quickhull $ fromList (Z :. length input) input
-  mapM_ (\x -> putStr ((show x) ++ ";")) input
-  putStr "\n"
-  -- mapM_ (\x -> putStr ((show x) ++ ";")) (toList output)
-  mapM_ (\x -> putStr ((show x) ++ ";")) (toList b)
-  putStr "\n"
-  mapM_ (\x -> putStr ((show x) ++ ";")) (toList p)
+  -- let (b,p) = quickhull $ fromList (Z :. length input) input
+  -- mapM_ (\x -> putStr ((show x) ++ ";")) input
+  -- putStr "\n"
+  -- -- mapM_ (\x -> putStr ((show x) ++ ";")) (toList output)
+  -- mapM_ (\x -> putStr ((show x) ++ ";")) (toList b)
+  -- putStr "\n"
+  -- mapM_ (\x -> putStr ((show x) ++ ";")) (toList p)
 
   -- let output = toList $ quickhull $ fromList (Z :. length input) input
   -- putStrLn "Output:"

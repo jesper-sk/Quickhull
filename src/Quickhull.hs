@@ -100,7 +100,7 @@ initialPartition points =
             (index1 idxUpper)
             (caseof p
               [ ((equal p1), index1 0),
-                ((equal p2), index1 (countUpperExp))
+                ((equal p2), index1 countUpperExp)
               ] (index1 $ countUpperExp + idxLower + 1))
       in
         zipWith4 f points isUpper lowerIndices upperIndices
@@ -179,6 +179,8 @@ partition (T2 headFlags points) =
     vecLine :: Acc (Vector Line)
     vecLine = propagateLine (T2 headFlags points)
 
+    equal (T2 x1 y1) (T2 x2 y2) = (x1 == x2) && (y1 == y2)
+
     headFlagsL = shiftHeadFlagsL headFlags
     headFlagsR = shiftHeadFlagsR headFlags
 
@@ -219,7 +221,11 @@ partition (T2 headFlags points) =
 
     -- * Exercise 16
     segmentSize :: Acc (Vector Int)
-    segmentSize = zipWith (\l r -> 1 + l + r) segmentIdxLeft segmentIdxRight
+    segmentSize = zipWith3 (\hi c hfl -> hfl ? (c, hi)) headInts count headFlagsL
+      where
+        headInts = map boolToInt headFlags
+        count = zipWith (\l r -> 1 + l + r) segmentIdxLeft segmentIdxRight
+      -- zipWith (\l r -> 1 + l + r) segmentIdxLeft segmentIdxRight
       -- let 
       --   f :: Exp (Int, Int) -> Exp (Int, Int) -> Exp (Int, Int)
       --   f t1 t2 = lift (((fst t1) + (fst t2) + (snd t2) + 1), constant (1 :: Int))
@@ -227,7 +233,8 @@ partition (T2 headFlags points) =
 
     segmentOffset :: Acc (Vector Int)
     size :: Acc (Scalar Int)
-    T2 segmentOffset size = scanl' (\p c -> (c == 1 ? (p+c,p))) (-1) segmentSize
+    T2 segmentOffset size = scanl' (+) 0 segmentSize
+      --scanl' (\p c -> (c == 1 ? (p+c,p))) (-1) segmentSize
 
     -- * Exercise 17
     permutation :: Acc (Vector (Z :. Int))
@@ -235,22 +242,20 @@ partition (T2 headFlags points) =
       let
         --For each segment: [points left from (p1,pf)] pf [points right from (pf,p2)]
         f :: Exp Bool -> Exp Point -> Exp Point -> Exp Bool -> Exp Bool -> Exp Int -> Exp Int -> Exp Int -> Exp Int -> Exp (Z :. Int)
-        f flag p furthestP left right offset cntLeft idxLeft idxRight
-          = 
-            -- if flag -> index1 offset
-            -- else if (not (left & right)) -> (index1?) ignore
-            -- else if (equal p furthestP) -> offset + cntLeft
-            -- else if left -> index1 $ offset + idxLeft
-            -- else if right -> index $ offset + cntLeft + idxRight
-            -- else $ throw error
-            undefined         
+        f flag p furthestP left right offset cntLeft idxLeft idxRight = 
+          caseof (T4 flag left right (equal p furthestP))
+            [ ((\(T4 f l r p) -> f), index1 offset),
+              ((\(T4 f l r p) -> l), index1 $ offset + idxLeft),
+              ((\(T4 f l r p) -> r), index1 $ offset + cntLeft + idxRight),
+              ((\(T4 f l r p) -> p), index1 $ offset + cntLeft)
+            ] ignore    
       in
         zipWith9 f headFlags points furthest isLeft isRight segmentOffset countLeft segmentIdxLeft segmentIdxRight
 
     -- * Exercise 18
     -- fill a vector with as shape the shape of permuation and as values the first point from points
-    empty :: Acc (Vector Point)
-    empty = fill (shape permutation) (points !! 0)
+    empty :: Elt a => Acc (Vector a)
+    empty = fill (index1 $ the size) Unsafe.undef
 
     -- permute the values from the permuation which do not have 'ignore' to the empty list
     newPoints :: Acc (Vector Point)
@@ -259,7 +264,7 @@ partition (T2 headFlags points) =
     -- * Exercise 19
     -- ook ff kijken of deze goed gaat
     newHeadFlags :: Acc (Vector Bool)
-    newHeadFlags = permute const (fill (shape permutation) (constant False)) (permutation !) headFlags
+    newHeadFlags = permute const empty (permutation !) headFlags
 
   in
     T2 newHeadFlags newPoints
@@ -267,7 +272,7 @@ partition (T2 headFlags points) =
 -- * Exercise 20
 condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
   -- if (length (input) == 0 ) // (of == 2 want p1 en p2)
-condition (T2 flags points) = unit ((length points <= constant 2) ? (constant False, constant True))
+condition (T2 flags points) = unit (length points > constant 2)
 
 -- * Exercise 21
 quickhull' :: Acc (Vector Point) -> Acc (Vector Point)

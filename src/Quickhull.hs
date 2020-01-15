@@ -140,9 +140,12 @@ segmentedPostscanr f bools units =
   in P.snd $ unzip scan
 
 -- * Exercise 9
+-- As how these functions are implemented their behaviour is exactly opposite of how there behaviours are defined in the exercise.
+-- Because postscanL will scan from left to right, while propagateL is defined as propagating a value from right to the left.
 propagateL :: Elt a => Acc (Vector Bool) -> Acc (Vector a) -> Acc (Vector a)
 propagateL = segmentedPostscanl const
 
+-- Idem dito, respectively
 propagateR :: Elt a => Acc (Vector Bool) -> Acc (Vector a) -> Acc (Vector a)
 propagateR = segmentedPostscanr (P.flip const)
 
@@ -212,7 +215,7 @@ partition (T2 headFlags points) =
     -- * Exercise 15
     -- OOK HIER FF KIJKEN OF DIT GOED IS QUA HEADFLAGS
     countLeft :: Acc (Vector Int)
-    countLeft = propagateR headFlags segmentIdxLeft
+    countLeft = propagateR headFlagsL segmentIdxLeft
 
     -- * Exercise 16
     segmentSize :: Acc (Vector Int)
@@ -222,46 +225,55 @@ partition (T2 headFlags points) =
       --   f t1 t2 = lift (((fst t1) + (fst t2) + (snd t2) + 1), constant (1 :: Int))
       -- in P.fst $ unzip $ segmentedPostscanl f headFlags (zip segmentIdxRight segmentIdxLeft)
 
-     
-
     segmentOffset :: Acc (Vector Int)
     size :: Acc (Scalar Int)
-    T2 segmentOffset size = scanl' (+) 0 segmentSize
+    T2 segmentOffset size = scanl' (\p c -> (c == 1 ? (p+c,p))) (-1) segmentSize
 
     -- * Exercise 17
     permutation :: Acc (Vector (Z :. Int))
     permutation =
       let
-        --For each segment: [points left from (p1,pf)] pf [points right from (p2,pf)]
+        --For each segment: [points left from (p1,pf)] pf [points right from (pf,p2)]
         f :: Exp Bool -> Exp Point -> Exp Point -> Exp Bool -> Exp Bool -> Exp Int -> Exp Int -> Exp Int -> Exp Int -> Exp (Z :. Int)
         f flag p furthestP left right offset cntLeft idxLeft idxRight
-          = undefined
+          = 
+            -- if flag -> index1 offset
+            -- else if (not (left & right)) -> (index1?) ignore
+            -- else if (equal p furthestP) -> offset + cntLeft
+            -- else if left -> index1 $ offset + idxLeft
+            -- else if right -> index $ offset + cntLeft + idxRight
+            -- else $ throw error
+            undefined         
       in
         zipWith9 f headFlags points furthest isLeft isRight segmentOffset countLeft segmentIdxLeft segmentIdxRight
 
     -- * Exercise 18
+    -- fill a vector with as shape the shape of permuation and as values the first point from points
     empty :: Acc (Vector Point)
-    empty = undefined
+    empty = fill (shape permutation) (points !! 0)
 
+    -- permute the values from the permuation which do not have 'ignore' to the empty list
     newPoints :: Acc (Vector Point)
-    newPoints = undefined
-
+    newPoints = permute const empty (permutation !) points
+                                      -- ^^ ff kijken of dit goede functie is
     -- * Exercise 19
+    -- ook ff kijken of deze goed gaat
     newHeadFlags :: Acc (Vector Bool)
-    newHeadFlags = undefined
+    newHeadFlags = permute const (fill (shape permutation) (constant False)) (permutation !) headFlags
+
   in
     T2 newHeadFlags newPoints
 
 -- * Exercise 20
 condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
-condition = undefined
+  -- if (length (input) == 0 ) // (of == 2 want p1 en p2)
+condition (T2 flags points) = unit ((length points <= constant 2) ? (constant False, constant True))
 
 -- * Exercise 21
-quickhull' :: Acc (Vector Point) -> Acc (Vector Bool, Vector Point)
-quickhull' = initialPartition
---quickhull' = propagateLine . initialPartition
+quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
+quickhull' input = asnd $ awhile condition partition (initialPartition input)
 
-quickhull :: Vector Point -> (Vector Bool, Vector Point)
+quickhull :: Vector Point -> Vector Point
 quickhull = run1 quickhull'
 
 -- * Bonus

@@ -226,12 +226,13 @@ partition (T2 headFlags points) =
 
     segmentOffset :: Acc (Vector Int)
     size :: Acc (Scalar Int)
-    T2 segmentOffset size = undefined
+    T2 segmentOffset size = scanl' (+) 0 segmentSize
 
     -- * Exercise 17
     permutation :: Acc (Vector (Z :. Int))
     permutation =
       let
+        --For each segment: [points left from (p1,pf)] pf [points right from (p2,pf)]
         f :: Exp Bool -> Exp Point -> Exp Point -> Exp Bool -> Exp Bool -> Exp Int -> Exp Int -> Exp Int -> Exp Int -> Exp (Z :. Int)
         f flag p furthestP left right offset cntLeft idxLeft idxRight
           = undefined

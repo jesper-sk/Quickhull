@@ -101,16 +101,14 @@ initialPartition points =
     permutation :: Acc (Vector (Z :. Int))
     permutation =
       let
-        countUpperExp = the countUpper
-
         f :: Exp Point -> Exp Bool -> Exp Int -> Exp Int -> Exp (Z :. Int)
         f p upper idxLower idxUpper = 
           ifThenElse upper
             (index1 idxUpper)
             (caseof p
               [ ((equal p1), index1 0),
-                ((equal p2), index1 countUpperExp)
-              ] (index1 $ countUpperExp + idxLower + 1))
+                ((equal p2), index1 $ the countUpper)
+              ] (index1 $ (the countUpper) + idxLower + 1))
       in
         zipWith4 f points isUpper lowerIndices upperIndices
 
@@ -209,13 +207,10 @@ partition (T2 headFlags points) =
     isRight = zipWith3 (\(T2 p1 p2) pf p -> pointIsRightOfLine (T2 p2 pf) p) vecLine furthest points
 
     -- * Exercise 14
-    -- FF KIJKEN OF IK DIT GOED GEDAAN HEB
     segmentIdxLeft :: Acc (Vector Int)
     segmentIdxLeft = 
-      let isLeftInt = map boolToInt isLeft      -- Zet de booleans over naar Ints
-      in segmentedPostscanl (+) headFlags isLeftInt  -- Voer een segmentedpostscan uit, 
-                                                      -- vgm kan je of headFlags of headFlagsR gebruiken, NIET headFlagsL! Want p1, p2 en pf zijn én niet isLeft én niet isRight
-                                                      -- Niet headFlagsL want dan wordt de counter een point te vroeg gereset.
+      let isLeftInt = map boolToInt isLeft
+      in segmentedPostscanl (+) headFlags isLeftInt
 
     -- Works the same as segmentIdxLeft, however here we look if the point isRight:
     segmentIdxRight :: Acc (Vector Int)
@@ -224,7 +219,6 @@ partition (T2 headFlags points) =
       in segmentedPostscanl (+) headFlags isRightInt
 
     -- * Exercise 15
-    -- OOK HIER FF KIJKEN OF DIT GOED IS QUA HEADFLAGS
     countLeft :: Acc (Vector Int)
     countLeft = propagateR headFlagsL segmentIdxLeft
 
@@ -234,22 +228,15 @@ partition (T2 headFlags points) =
       where
         headInts = map boolToInt headFlags
         count = zipWith (\l r -> 1 + l + r) segmentIdxLeft segmentIdxRight
-      -- zipWith (\l r -> 1 + l + r) segmentIdxLeft segmentIdxRight
-      -- let 
-      --   f :: Exp (Int, Int) -> Exp (Int, Int) -> Exp (Int, Int)
-      --   f t1 t2 = lift (((fst t1) + (fst t2) + (snd t2) + 1), constant (1 :: Int))
-      -- in P.fst $ unzip $ segmentedPostscanl f headFlags (zip segmentIdxRight segmentIdxLeft)
 
     segmentOffset :: Acc (Vector Int)
     size :: Acc (Scalar Int)
     T2 segmentOffset size = scanl' (+) 0 segmentSize
-      --scanl' (\p c -> (c == 1 ? (p+c,p))) (-1) segmentSize
 
     -- * Exercise 17
     permutation :: Acc (Vector (Z :. Int))
     permutation =
       let
-        --For each segment: [points left from (p1,pf)] pf [points right from (pf,p2)]
         f :: Exp Bool -> Exp Point -> Exp Point -> Exp Bool -> Exp Bool -> Exp Int -> Exp Int -> Exp Int -> Exp Int -> Exp (Z :. Int)
         f flag p furthestP left right offset cntLeft idxLeft idxRight = 
           caseof (T4 flag left right (equal p furthestP))
@@ -269,50 +256,24 @@ partition (T2 headFlags points) =
     -- permute the values from the permuation which do not have 'ignore' to the empty list
     newPoints :: Acc (Vector Point)
     newPoints = permute const empty (permutation !) points
-                                      -- ^^ ff kijken of dit goede functie is
+
     -- * Exercise 19
-    -- ook ff kijken of deze goed gaat
     newHeadFlags :: Acc (Vector Bool)
-    newHeadFlags = permute const empty (permutation !) headFlags
+    newHeadFlags = zipWith3 (\f fp p -> f || (equal fp p)) headFlags furthest points
 
   in
     T2 newHeadFlags newPoints
 
-
--- TOT HIERBOVEN GOED (gecontroleerd en wel)
-
 -- * Exercise 20
 condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
-  -- if (length (input) == 0 ) // (of == 2 want p1 en p2)
-condition (T2 flags points) = unit (length points > 2)
+condition (T2 flags points) = any (\b -> not b) flags
 
 -- * Exercise 21
 quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
---quickhull' input = asnd $ awhile condition partition (initialPartition input)
-quickhull' input = asnd $ partition $ partition $ partition $ partition $ partition $ partition $ partition $ partition $ partition $ partition $ partition $ (initialPartition input)
-  -- where 
-  --   recurse :: Exp Int -> Acc SegmentedPoints -> Acc SegmentedPoints
-  --   recurse c segments  = 
-  --     ((c > 2) ?| 
-  --       (segments,
-  --       (acond
-  --         (the $ condition segments)
-  --         (recurse (c + 1) $ partition segments)
-  --         segments)
-  --       ))
-
---quickhull' input = asnd $ partition $ initialPartition input
+quickhull' input = asnd $ awhile condition partition (initialPartition input)
 
 quickhull :: Vector Point -> Vector Point
 quickhull = run1 quickhull'
-
--- -- * Exercise 21
--- quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
--- --quickhull' input = asnd $ awhile condition partition (initialPartition input)
--- quickhull' input = asnd $ partition $ initialPartition input
-
--- quickhull :: Vector Point -> Vector Point
--- quickhull = run1 quickhull'
 
 -- * Bonus
 quickhullSort' :: Acc (Vector Int) -> Acc (Vector Int)
@@ -320,21 +281,3 @@ quickhullSort' = undefined
 
 quickhullSort :: Vector Int -> Vector Int
 quickhullSort = run1 quickhullSort'
-
--- -- * Exercise 20
--- condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
--- condition = undefined
-
--- -- * Exercise 21
--- quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
--- quickhull' = undefined
-
--- quickhull :: Vector Point -> Vector Point
--- quickhull = run1 quickhull'
-
--- -- * Bonus
--- quickhullSort' :: Acc (Vector Int) -> Acc (Vector Int)
--- quickhullSort' = undefined
-
--- quickhullSort :: Vector Int -> Vector Int
--- quickhullSort = run1 quickhullSort'

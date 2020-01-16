@@ -22,9 +22,18 @@ type Line = (Point, Point)
 
 type SegmentedPoints = (Vector Bool, Vector Point)
 
+
+
 --Left == Upper?
 pointIsLeftOfLine :: Exp Line -> Exp Point -> Exp Bool
 pointIsLeftOfLine (T2 (T2 x1 y1) (T2 x2 y2)) (T2 x y) = nx * x + ny * y > c
+  where
+    nx = y1 - y2
+    ny = x2 - x1
+    c = nx * x1 + ny * y1
+
+pointIsRightOfLine :: Exp Line -> Exp Point -> Exp Bool
+pointIsRightOfLine (T2 (T2 x1 y1) (T2 x2 y2)) (T2 x y) = nx * x + ny * y < c
   where
     nx = y1 - y2
     ny = x2 - x1
@@ -47,7 +56,7 @@ leftMostPoint points = fold1
   --Rightmost: Hoogste x
 rightMostPoint :: Acc (Vector Point) -> Acc (Scalar Point)
 rightMostPoint points = fold1
-  (\p1 p2 -> ifThenElse ((fst p1) >= (fst p2)) p1 p2) -- '>' instead of '>' to take first extreme point
+  (\p1 p2 -> ifThenElse ((fst p1) >= (fst p2)) p1 p2) -- '>' instead of '>=' to take first extreme point
   points
 
 initialPartition :: Acc (Vector Point) -> Acc SegmentedPoints
@@ -197,7 +206,7 @@ partition (T2 headFlags points) =
     isLeft = zipWith3 (\(T2 p1 p2) pf p -> pointIsLeftOfLine (T2 p1 pf) p) vecLine furthest points
 
     isRight :: Acc (Vector Bool)
-    isRight = zipWith3 (\(T2 p1 p2) pf p -> not $ pointIsLeftOfLine (T2 p1 pf) p) vecLine furthest points
+    isRight = zipWith3 (\(T2 p1 p2) pf p -> pointIsRightOfLine (T2 p2 pf) p) vecLine furthest points
 
     -- * Exercise 14
     -- FF KIJKEN OF IK DIT GOED GEDAAN HEB
@@ -245,7 +254,7 @@ partition (T2 headFlags points) =
         f flag p furthestP left right offset cntLeft idxLeft idxRight = 
           caseof (T4 flag left right (equal p furthestP))
             [ ((\(T4 f l r p) -> f), index1 offset),
-              ((\(T4 f l r p) -> l), index1 $ offset + idxLeft),
+              ((\(T4 f l r p) -> l), index1 $ offset + idxLeft - 1),
               ((\(T4 f l r p) -> r), index1 $ offset + cntLeft + idxRight),
               ((\(T4 f l r p) -> p), index1 $ offset + cntLeft)
             ] ignore    
@@ -269,17 +278,41 @@ partition (T2 headFlags points) =
   in
     T2 newHeadFlags newPoints
 
+
+-- TOT HIERBOVEN GOED (gecontroleerd en wel)
+
 -- * Exercise 20
 condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
   -- if (length (input) == 0 ) // (of == 2 want p1 en p2)
-condition (T2 flags points) = unit (length points > constant 2)
+condition (T2 flags points) = unit (length points > 2)
 
 -- * Exercise 21
 quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
-quickhull' input = asnd $ awhile condition partition (initialPartition input)
+--quickhull' input = asnd $ awhile condition partition (initialPartition input)
+quickhull' input = asnd $ partition $ partition $ partition $ partition $ partition $ partition $ partition $ partition $ partition $ partition $ partition $ (initialPartition input)
+  -- where 
+  --   recurse :: Exp Int -> Acc SegmentedPoints -> Acc SegmentedPoints
+  --   recurse c segments  = 
+  --     ((c > 2) ?| 
+  --       (segments,
+  --       (acond
+  --         (the $ condition segments)
+  --         (recurse (c + 1) $ partition segments)
+  --         segments)
+  --       ))
+
+--quickhull' input = asnd $ partition $ initialPartition input
 
 quickhull :: Vector Point -> Vector Point
 quickhull = run1 quickhull'
+
+-- -- * Exercise 21
+-- quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
+-- --quickhull' input = asnd $ awhile condition partition (initialPartition input)
+-- quickhull' input = asnd $ partition $ initialPartition input
+
+-- quickhull :: Vector Point -> Vector Point
+-- quickhull = run1 quickhull'
 
 -- * Bonus
 quickhullSort' :: Acc (Vector Int) -> Acc (Vector Int)

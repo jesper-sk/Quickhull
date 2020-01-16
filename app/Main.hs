@@ -38,13 +38,17 @@ run path = do
   -- mapM_ (\x -> putStr ((show x) ++ ";")) (toList b)
   -- putStr "\n"
   -- mapM_ (\x -> putStr ((show x) ++ ";")) (toList p)
+  putStrLn "Hey Jochie"
+  let output = toList $ quickhull $ fromList (Z :. length input) input
+  putStrLn "Output:"
+  if veryLarge then
+    putStrLn $ "Set of " ++ show (length output) ++ " points"
+  else
+    printPoints output
 
+  --DEBUG HIERONDER
   -- let output = toList $ quickhull $ fromList (Z :. length input) input
-  -- putStrLn "Output:"
-  -- if veryLarge then
-  --   putStrLn $ "Set of " ++ show (length output) ++ " points"
-  -- else
-  --   printPoints output
+  -- print output
 
 readInput :: FilePath -> IO [Point]
 readInput path = do

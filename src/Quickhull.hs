@@ -13,8 +13,8 @@ import qualified Prelude as P
 
 -- Accelerate backend
 import Data.Array.Accelerate.Interpreter 
--- import Data.Array.Accelerate.LLVM.Native
--- import Data.Array.Accelerate.LLVM.PTX
+--import Data.Array.Accelerate.LLVM.Native
+--import Data.Array.Accelerate.LLVM.PTX
 
 type Point = (Int, Int)
 
@@ -259,18 +259,26 @@ partition (T2 headFlags points) =
 
     -- * Exercise 19
     newHeadFlags :: Acc (Vector Bool)
-    newHeadFlags = zipWith3 (\f fp p -> f || (equal fp p)) headFlags furthest points
+    --newHeadFlags = zipWith3 (\f fp p -> f || (equal fp p)) headFlags furthest newPoints
+    newHeadFlags =
+      let defaultFlags = fill (index1 $ the size) (constant False)
+          toPermute = fill (shape segmentSize) (constant True)
+      in permute const defaultFlags (\ix -> index1 (segmentOffset!ix)) toPermute
 
   in
     T2 newHeadFlags newPoints
 
 -- * Exercise 20
 condition :: Acc SegmentedPoints -> Acc (Scalar Bool)
-condition (T2 flags points) = any (\b -> not b) flags
+condition (T2 flags points) = any not flags
 
 -- * Exercise 21
 quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
 quickhull' input = asnd $ awhile condition partition (initialPartition input)
+--quickhull' input = awhile condition partition (initialPartition input)
+--quickhull' input = asnd $ partition $ partition $ partition $ partition $ initialPartition input
+--quickhull' input = asnd $ partition $ initialPartition input
+--quickhull' input = afs $ partition $ partition $ initialPartition input
 
 quickhull :: Vector Point -> Vector Point
 quickhull = run1 quickhull'

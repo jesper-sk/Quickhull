@@ -264,7 +264,6 @@ partition (T2 headFlags points) =
       let zeros = fill (index1 $ the size) (constant False)
           ones = fill (shape segmentSize) (constant True)
       in permute const zeros (\ix -> index1 $ segmentOffset!ix + (headFlags!ix ? (0, countLeft!ix))) ones
-    -- --newHeadFlags = zipWith3 (\f fp p -> f || (equal fp p)) headFlags furthest newPoints
     -- newHeadFlags =
     --   let defaultFlags = fill (index1 $ the size) (constant False)
     --       toPermute = fill (shape segmentSize) (constant True)

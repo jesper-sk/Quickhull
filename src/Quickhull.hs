@@ -22,7 +22,8 @@ type Line = (Point, Point)
 
 type SegmentedPoints = (Vector Bool, Vector Point)
 
-
+input1 :: Acc (Vector Point)
+input1 = use $ fromList (Z :. 15) [(1,4),(8,19),(5,9),(7,9),(4,2),(3,9),(9,16),(1,5),(9,11),(4,0),(8,18),(8,7),(7,18),(6,18),(4,19)]
 
 --Left == Upper?
 pointIsLeftOfLine :: Exp Line -> Exp Point -> Exp Bool
@@ -259,11 +260,15 @@ partition (T2 headFlags points) =
 
     -- * Exercise 19
     newHeadFlags :: Acc (Vector Bool)
-    --newHeadFlags = zipWith3 (\f fp p -> f || (equal fp p)) headFlags furthest newPoints
-    newHeadFlags =
-      let defaultFlags = fill (index1 $ the size) (constant False)
-          toPermute = fill (shape segmentSize) (constant True)
-      in permute const defaultFlags (\ix -> index1 (segmentOffset!ix)) toPermute
+    newHeadFlags = 
+      let zeros = fill (index1 $ the size) (constant False)
+          ones = fill (shape segmentSize) (constant True)
+      in permute const zeros (\ix -> index1 $ segmentOffset!ix + (headFlags!ix ? (0, countLeft!ix))) ones
+    -- --newHeadFlags = zipWith3 (\f fp p -> f || (equal fp p)) headFlags furthest newPoints
+    -- newHeadFlags =
+    --   let defaultFlags = fill (index1 $ the size) (constant False)
+    --       toPermute = fill (shape segmentSize) (constant True)
+    --   in permute const defaultFlags (\ix -> index1 (segmentOffset!ix)) toPermute
 
   in
     T2 newHeadFlags newPoints

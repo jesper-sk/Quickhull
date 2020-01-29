@@ -13,8 +13,8 @@ import qualified Prelude as P
 
 -- Accelerate backend
 import Data.Array.Accelerate.Interpreter 
---import Data.Array.Accelerate.LLVM.Native
---import Data.Array.Accelerate.LLVM.PTX
+import qualified Data.Array.Accelerate.LLVM.Native as CPU
+import qualified Data.Array.Accelerate.LLVM.PTX as GPU
 
 type Point = (Int, Int)
 
@@ -116,8 +116,7 @@ initialPartition points =
     -- * Exercise 6
     empty :: Acc (Vector Point)
     empty = 
-      let oldsh = shape points
-          sh = ilift1 (1 +) oldsh
+      let sh = ilift1 (1 +) (shape points)
       in fill sh p1
 
     newPoints :: Acc (Vector Point)
@@ -126,8 +125,7 @@ initialPartition points =
     -- * Exercise 7
     headFlags :: Acc (Vector Bool)
     headFlags =
-      let oldsh = shape points
-          sh = ilift1 (1 +) oldsh
+      let sh = ilift1 (1 +) (shape points)
       in generate sh (\ind -> isExtreme $ newPoints ! ind)
   in
     T2 headFlags newPoints
@@ -180,6 +178,9 @@ shiftHeadFlagsR flags =
         ((constant False),
         (flags !! (i - 1)))
   in generate (shape flags) (f . unindex1)
+
+-- shiftHeadFlagsR flags = permute const (fill (shape flags) 0) (ilift1 (\idx -> mod (idx + 1) (length flags))) flags
+-- shiftHeadFlagsL flags = permute const (fill (shape flags) 0) (ilift1 (\idx -> mod (idx - 1) (length flags))) flags
 
 partition :: Acc SegmentedPoints -> Acc SegmentedPoints
 partition (T2 headFlags points) =
@@ -263,14 +264,9 @@ partition (T2 headFlags points) =
     newHeadFlags = 
       let zeros = fill (index1 $ the size) (constant False)
           ones = fill (shape segmentSize) (constant True)
-          headFlagInts = map boolToInt headFlags
-      --in permute const zeros (\ix -> index1 $ segmentOffset!ix + (headFlagInts!ix * countLeft!ix)) ones
-      in permute const zeros (\ix -> index1 $ segmentOffset!ix + (headFlags!ix ? (0, countLeft!ix))) ones
-    -- newHeadFlags =
-    --   let defaultFlags = fill (index1 $ the size) (constant False)
-    --       toPermute = fill (shape segmentSize) (constant True)
-    --   in permute const defaultFlags (\ix -> index1 (segmentOffset!ix)) toPermute
-
+          cond = zipWith (*) countLeft (map (boolToInt . not) headFlags)
+      in permute const zeros (\ix -> I1 (segmentOffset!ix + cond!ix)) ones
+      --in permute const zeros (\ix -> index1 $ segmentOffset!ix + (headFlags!ix ? (0, countLeft!ix))) ones
   in
     T2 newHeadFlags newPoints
 
@@ -281,10 +277,6 @@ condition (T2 flags points) = any not flags
 -- * Exercise 21
 quickhull' :: Acc (Vector Point) -> Acc (Vector Point)
 quickhull' input = asnd $ awhile condition partition (initialPartition input)
---quickhull' input = awhile condition partition (initialPartition input)
---quickhull' input = asnd $ partition $ partition $ partition $ partition $ initialPartition input
---quickhull' input = asnd $ partition $ initialPartition input
---quickhull' input = afs $ partition $ partition $ initialPartition input
 
 quickhull :: Vector Point -> Vector Point
 quickhull = run1 quickhull'

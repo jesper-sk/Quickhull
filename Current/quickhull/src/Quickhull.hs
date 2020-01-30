@@ -164,23 +164,26 @@ propagateLine (T2 headFlags points) = zip vecP1 vecP2
 
 -- * Exercise 11
 shiftHeadFlagsL :: Acc (Vector Bool) -> Acc (Vector Bool)
-shiftHeadFlagsL flags = 
-  let f i = 
-        (i == (size flags) - 1) ? 
-        ((constant False), 
-        (flags !! (i + 1)))
-  in generate (shape flags) (f . unindex1)
+shiftHeadFlagsL flags = permute const base shift flags
+  where
+    base = fill (shape flags) (Unsafe.undef)
+    shift = ilift1 (\idx -> mod (idx - 1) (length flags))
+  -- let f i = 
+  --       (i == (size flags) - 1) ? 
+  --       ((constant False), 
+  --       (flags !! (i + 1)))
+  -- in generate (shape flags) (f . unindex1)
 
 shiftHeadFlagsR :: Acc (Vector Bool) -> Acc (Vector Bool)
-shiftHeadFlagsR flags = 
-  let f i = 
-        (i == (0)) ?
-        ((constant False),
-        (flags !! (i - 1)))
-  in generate (shape flags) (f . unindex1)
-
--- shiftHeadFlagsR flags = permute const (fill (shape flags) 0) (ilift1 (\idx -> mod (idx + 1) (length flags))) flags
--- shiftHeadFlagsL flags = permute const (fill (shape flags) 0) (ilift1 (\idx -> mod (idx - 1) (length flags))) flags
+shiftHeadFlagsR flags = permute const base shift flags
+  where
+    base = fill (shape flags) (Unsafe.undef)
+    shift = ilift1 (\idx -> mod (idx + 1) (length flags))
+  -- let f i = 
+  --       (i == (0)) ?
+  --       ((constant False),
+  --       (flags !! (i - 1)))
+  -- in generate (shape flags) (f . unindex1)
 
 partition :: Acc SegmentedPoints -> Acc SegmentedPoints
 partition (T2 headFlags points) =

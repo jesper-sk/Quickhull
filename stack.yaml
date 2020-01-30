@@ -46,9 +46,13 @@ extra-deps:
    - accelerate-llvm
    - accelerate-llvm-native
    - accelerate-llvm-ptx
+- git: https://github.com/bradrn/terminal-size
+  commit: 591033712003b58f8c61dba0fc60e95439df9c9b
 
 # Override default flag values for local packages and extra-deps
-# flags: {}
+flags: 
+  accelerate-llvm-ptx:
+    nvvm: true
 
 # Extra package databases containing global packages
 # extra-package-dbs: []

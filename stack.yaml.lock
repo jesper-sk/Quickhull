@@ -66,6 +66,20 @@ packages:
   original:
     subdir: accelerate-llvm-ptx
     url: https://github.com/AccelerateHS/accelerate-llvm/archive/0f92cd6ad324f87378bffbb9b74bbd0722cee417.zip
+- completed:
+    cabal-file:
+      size: 1259
+      sha256: 7b2d8e0475a46961d07ddfb91dee618de70eff55d9ba0402ebeac1f9dcf9b18b
+    name: terminal-size
+    version: 0.3.2.1
+    git: https://github.com/bradrn/terminal-size
+    pantry-tree:
+      size: 831
+      sha256: d6ae3565cec1a0f6d14ab687884d668633c297005723d96986a2c0012d4fd245
+    commit: 591033712003b58f8c61dba0fc60e95439df9c9b
+  original:
+    git: https://github.com/bradrn/terminal-size
+    commit: 591033712003b58f8c61dba0fc60e95439df9c9b
 snapshots:
 - completed:
     size: 524155
